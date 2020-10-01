@@ -6,8 +6,15 @@
 #define DISCORD_ISA_HTTPRESONSE_H
 
 
-class HttpResonse {
+#include <string_view>
+#include <string>
 
+class HttpResonse {
+public:
+    HttpResonse(std::string response);
+
+    std::string_view message;
+    std::string_view body;
 };
 
 

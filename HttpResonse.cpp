@@ -3,3 +3,7 @@
 //
 
 #include "HttpResonse.h"
+
+HttpResonse::HttpResonse(std::string response) {
+
+}

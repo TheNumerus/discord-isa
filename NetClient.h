@@ -9,6 +9,7 @@
 #include <memory>
 #include <cstring>
 #include <iostream>
+#include <openssl/ssl.h>
 
 // NetClient methods would shadow socket functions otherwise
 namespace sockets {
@@ -16,14 +17,10 @@ namespace sockets {
     #include <netinet/in.h>
     #include <netdb.h>
     #include <arpa/inet.h>
-
 }
-
 
 class NetClient {
 public:
-    NetClient();
-
     bool create();
     bool connect();
     std::string send(std::string message);
@@ -35,6 +32,9 @@ private:
     struct sockets::addrinfo* discord_addr = nullptr;
     int socket_id = -1;
     bool conection_made = false;
+
+    ssl_ctx_st* ssl_ctx = nullptr;
+    ssl_st* ssl = nullptr;
 
     bool find_discord_ip();
 };

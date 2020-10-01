@@ -2,9 +2,9 @@
 // Created by pedro on 30.09.20.
 //
 
-#include "Client.h"
+#include "NetClient.h"
 
-bool Client::create() {
+bool NetClient::create() {
 
     this->socket_id = socket(PF_INET, sockets::SOCK_STREAM, sockets::IPPROTO_TCP);
     if (this->socket_id == -1) {
@@ -15,22 +15,23 @@ bool Client::create() {
         return false;
     }
 
+    this->ssl_ctx = SSL_CTX_new(TLS_method());
+
     return true;
 }
 
-Client::~Client() {
-    close(this->socket_id);
+NetClient::~NetClient() {
+    if (this->socket_id != 1) {
+        close(this->socket_id);
+    }
+    SSL_CTX_free(this->ssl_ctx);
     if (this->discord_addr != nullptr) {
         free(this->discord_addr);
     }
+    SSL_free(this->ssl);
 }
 
-Client::Client() {
-    this->socket_id = 0;
-    this->sa = {0};
-}
-
-bool Client::find_discord_ip() {
+bool NetClient::find_discord_ip() {
     struct sockets::addrinfo hints = {};
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = sockets::SOCK_STREAM;
@@ -53,23 +54,34 @@ bool Client::find_discord_ip() {
     return true;
 }
 
-bool Client::connect() {
+bool NetClient::connect() {
     // check if socket was even created
     if (this->socket_id == -1) {
         return false;
     }
+    this->ssl = SSL_new(this->ssl_ctx);
+    SSL_set_fd(this->ssl, this->socket_id);
     int status = sockets::connect(this->socket_id, this->discord_addr->ai_addr, this->discord_addr->ai_addrlen);
+    SSL_connect(this->ssl);
     this->conection_made = status == 0;
     return status == 0;
 }
 
-std::string Client::send(std::string message) {
+std::string NetClient::send(std::string message) {
     // check if socket was even created and connection made
-    if (this->socket_id == -1 || !this->conection_made) {
+    if (this->socket_id == -1) {
         return "";
     }
 
-    int bytes_send = sockets::send(this->socket_id, message.c_str(), message.size() + 1, 0);
+    //if (!this->conection_made) {
+        this->connect();
+    //}
+
+    std::cout << "in send";
+
+    size_t bytes_send = -1;
+
+    SSL_write_ex(this->ssl, message.c_str(), message.size() + 1, &bytes_send);
 
     if (bytes_send == -1) {
         // TODO handle error
@@ -77,9 +89,10 @@ std::string Client::send(std::string message) {
         // TODO message might be big so bytes send will not match message length, so try to resend
     }
 
-    char buffer[1024];
+    char buffer[10240] = {0};
 
-    int bytes_recieved = sockets::recv(this->socket_id, buffer, 1024, 0);
+    size_t bytes_recieved = -1;
+    SSL_read_ex(this->ssl, buffer, 10240, &bytes_recieved);
 
     if (bytes_recieved == -1) {
         // TODO handle error

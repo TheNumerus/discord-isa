@@ -6,8 +6,17 @@
 #define DISCORD_ISA_HTTPCLIENT_H
 
 
-class HTTPClient {
+#include "NetClient.h"
 
+class HTTPClient {
+public:
+    HTTPClient(const std::shared_ptr<std::string>&);
+    bool get(std::string message);
+    bool post();
+
+private:
+    NetClient nc;
+    std::shared_ptr<std::string> token;
 };
 
 
