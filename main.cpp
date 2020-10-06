@@ -1,27 +1,26 @@
 #include <iostream>
 #include "ArgData.h"
-#include "HTTPClient.h"
+#include "HttpClient.h"
 
 void print_help();
 
 int main(int argc, char *argv[]) {
-    // parse args
-    auto args = ArgData::parse(argc, argv);
-    if (!args.has_value()) {
-        std::cerr << "Invalid combination of arguments." << std::endl;
+    SSL_library_init();
+    try {
+        ArgData args(argc, argv);
+
+        if (args.print_help) {
+            print_help();
+            return 0;
+        }
+
+        HttpClient httpClient(args.token);
+
+        httpClient.get("/api/v8/users/@me");
+    } catch (std::exception &e) {
+        std::cerr << e.what() << std::endl;
         return -1;
     }
-
-    if (args->print_help) {
-        print_help();
-        return 0;
-    }
-
-    HTTPClient httpClient(args->token);
-    httpClient.get("/api/users/@me");
-    std::cout << "test\n";
-    httpClient.get("/api/users/@me");
-
     return 0;
 }
 

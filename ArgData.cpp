@@ -2,39 +2,41 @@
 // Created by pedro on 29.09.20.
 //
 
-#include <vector>
 #include "ArgData.h"
 
-ArgData::ArgData() {
-    this->verbose_output = false;
-    this->print_help = false;
-}
 
-std::optional<ArgData> ArgData::parse(int argc, char **argv) {
-    ArgData data;
+ArgData::ArgData(int argc, char **argv) {
     // copy args to vector
     std::vector<std::string> args;
     if (argc > 1) {
         args.assign(argv + 1, argv + argc);
+    } else {
+        this->print_help = true;
+        return;
     }
+
+    bool token_set = false;
 
     for(auto it = args.begin(); it != args.end(); it++) {
         auto s = *it;
         if(s == "-h" || s == "--help") {
-            data.print_help = true;
-            return data;
+            this->print_help = true;
         } else if (s == "-v" || s == "--verbose") {
-            data.verbose_output = true;
+            this->verbose_output = true;
         } else if (s == "-t") {
             it++;
             // someone forgot the token
             if (it == args.end()) {
-                return {};
+                throw std::runtime_error("token not specified");
             }
-            data.token = std::make_shared<std::string>(*it);
+            this->token = std::make_shared<std::string>(*it);
+            token_set = true;
         } else {
-            return {};
+            throw std::runtime_error("invalid parameter");
         }
     }
-    return data;
+
+    if (!token_set) {
+        throw std::runtime_error("token not specified");
+    }
 }

@@ -21,17 +21,17 @@ namespace sockets {
 
 class NetClient {
 public:
-    bool create();
+    NetClient();
     bool connect();
-    std::string send(std::string message);
+    void send(std::string message);
+    std::string receive();
 
     virtual ~NetClient();
 
 private:
-    struct sockets::sockaddr_in sa;
     struct sockets::addrinfo* discord_addr = nullptr;
     int socket_id = -1;
-    bool conection_made = false;
+    bool connection_made = false;
 
     ssl_ctx_st* ssl_ctx = nullptr;
     ssl_st* ssl = nullptr;

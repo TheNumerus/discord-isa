@@ -9,16 +9,16 @@
 #include <string>
 #include <optional>
 #include <memory>
+#include <vector>
+#include <stdexcept>
 
 class ArgData {
 public:
-    ArgData();
+    ArgData(int argc, char *argv[]);
 
-    bool print_help;
-    bool verbose_output;
+    bool print_help = false;
+    bool verbose_output = false;
     std::shared_ptr<std::string> token;
-
-    static std::optional<ArgData> parse(int argc, char *argv[]);
 };
 
 
