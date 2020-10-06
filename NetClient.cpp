@@ -86,8 +86,6 @@ void NetClient::send(std::string message) {
 
     size_t bytes_send = 0;
 
-    std::cout << message;
-
     int write_res = SSL_write_ex(this->ssl, message.data(), message.size(), &bytes_send);
 
     if (write_res != 1) {

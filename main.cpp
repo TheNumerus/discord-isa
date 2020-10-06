@@ -19,8 +19,10 @@ int main(int argc, char *argv[]) {
         httpClient.get("/api/v8/users/@me");
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
+        CRYPTO_cleanup_all_ex_data();
         return -1;
     }
+    CRYPTO_cleanup_all_ex_data();
     return 0;
 }
 

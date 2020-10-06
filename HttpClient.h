@@ -8,6 +8,7 @@
 
 #include "NetClient.h"
 #include "HttpResponse.h"
+#include "HttpHead.h"
 
 class HttpClient {
 public:

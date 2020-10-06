@@ -8,13 +8,14 @@
 
 #include <string_view>
 #include <string>
+#include "HttpHead.h"
 
 class HttpResponse {
 public:
-    HttpResponse(std::string response);
+    HttpResponse(HttpHead head, std::string body);
 
-    std::string_view message;
-    std::string_view body;
+    HttpHead head;
+    std::string body;
 };
 
 

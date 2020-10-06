@@ -4,6 +4,7 @@
 
 #include "HttpResponse.h"
 
-HttpResponse::HttpResponse(std::string response) {
-
+HttpResponse::HttpResponse(HttpHead head, std::string body) : head(head) {
+    this->head = head;
+    this->body = body;
 }
