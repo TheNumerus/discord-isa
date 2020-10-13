@@ -13,8 +13,8 @@
 class HttpClient {
 public:
     HttpClient(const std::shared_ptr<std::string>&);
-    HttpResponse get(const std::string& message);
-    HttpResponse post(const std::string& message);
+    HttpResponse get(const std::string& path);
+    HttpResponse post(const std::string& path, const std::string& message);
 
 private:
     std::unique_ptr<NetClient> nc;

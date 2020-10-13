@@ -8,6 +8,7 @@
 
 #include <string_view>
 #include <string>
+#include <ostream>
 #include "HttpHead.h"
 
 class HttpResponse {
@@ -16,6 +17,8 @@ public:
 
     HttpHead head;
     std::string body;
+
+    friend std::ostream &operator<<(std::ostream &os, const HttpResponse &response);
 };
 
 

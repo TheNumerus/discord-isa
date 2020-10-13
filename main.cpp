@@ -1,6 +1,7 @@
 #include <iostream>
+#include <vector>
 #include "ArgData.h"
-#include "HttpClient.h"
+#include "DiscordClient.h"
 
 void print_help();
 
@@ -14,11 +15,17 @@ int main(int argc, char *argv[]) {
             return 0;
         }
 
-        HttpClient httpClient(args.token);
+        DiscordClient discordClient(args);
+        // init bot
+        discordClient.find_guildId();
+        discordClient.find_channelId();
 
-        httpClient.get("/api/v8/users/@me");
+        //discordClient.send_message(R"({"content": "Opli je debilek", "embed": {"title": "sedel na birellu", "description": "a blbe se tlemil"}})");
+
+        // run loop
+        discordClient.run();
     } catch (std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         CRYPTO_cleanup_all_ex_data();
         return -1;
     }

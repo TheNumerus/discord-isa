@@ -61,11 +61,20 @@ std::pair<std::string, int> res_code(std::string i) {
     if (sub == "200 OK") {
         auto rest = i.substr(8);
         return std::make_pair(rest, 200);
+    } else if (sub == "400 Bad Request") {
+        auto rest = i.substr(17);
+        return std::make_pair(rest, 400);
     } else if (sub == "401 Unauthorized") {
         auto rest = i.substr(18);
         return std::make_pair(rest, 401);
+    } else if (sub == "404 Not Found") {
+        auto rest = i.substr(15);
+        return std::make_pair(rest, 404);
+    } else if (sub == "411 Length Required") {
+        auto rest = i.substr(21);
+        return std::make_pair(rest, 411);
     } else {
-        throw std::runtime_error("parse error");
+        throw std::runtime_error("Unknown or not implemented HTTP response code");
     }
 }
 

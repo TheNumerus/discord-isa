@@ -8,3 +8,9 @@ HttpResponse::HttpResponse(HttpHead head, std::string body) : head(head) {
     this->head = head;
     this->body = body;
 }
+
+std::ostream &operator<<(std::ostream &os, const HttpResponse &response) {
+    os << response.head << std::endl;
+    os << response.body << std::endl;
+    return os;
+}

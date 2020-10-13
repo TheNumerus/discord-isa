@@ -14,7 +14,7 @@ NetClient::NetClient() {
         throw std::runtime_error("Could not find discord IP");
     }
 
-    this->ssl_ctx = SSL_CTX_new(TLS_method());
+    this->ssl_ctx = SSL_CTX_new(TLS_client_method());
 }
 
 NetClient::~NetClient() {
@@ -106,7 +106,7 @@ std::string NetClient::receive() {
 
     size_t bytes_received = 0;
 
-    int read_res = SSL_read_ex(this->ssl, buffer, 4000, &bytes_received);
+    int read_res = SSL_read(this->ssl, buffer, 4000);
 
     if (read_res == 0) {
         std::cerr << "read error\n";

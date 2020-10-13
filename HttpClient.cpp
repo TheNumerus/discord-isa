@@ -27,22 +27,61 @@ HttpResponse HttpClient::get(const std::string &path) {
     }
 
     std::string chunked_response;
-    bool last_chunk = false;
-    do {
-        auto chunk = HttpChunk(body);
-        if (chunk.size == 0) {
-            last_chunk = true;
-        } else {
-            chunked_response.append(chunk.data);
-            body = nc->receive();
-        }
-    } while (!last_chunk);
 
-    std::cout << head << std::endl;
-    std::cout << chunked_response << std::endl;
+    while(true) {
+        try {
+            auto chunk = HttpChunk(body);
+            if (chunk.size == 0) {
+                break;
+            } else {
+                chunked_response.append(chunk.data);
+                body = nc->receive();
+            }
+        } catch (...) {
+            //body.append(body);
+            body.append(nc->receive());
+        }
+    };
+
     return HttpResponse(head, chunked_response);
 }
 
-HttpResponse HttpClient::post(const std::string& message) {
-    return HttpResponse(HttpHead(500), "");
+HttpResponse HttpClient::post(const std::string& path, const std::string& message) {
+    std::string post_message = "POST " + path + " HTTP/1.1\r\n" +
+                          "Host: discord.com\r\n" +
+                          "Accept: */*\r\n" +
+                          "User-Agent: DiscordBot (https://github.com/TheNumerus/discord-isa, 0.1.0)\r\n" +
+                          "Content-Type: application/json\r\n" +
+                          "Content-Length: " + std::to_string(message.size()) + "\r\n" +
+                          "Authorization: Bot " + *this->token + "\r\n\r\n" + message;
+    nc->send(post_message);
+
+    std::cout << post_message << std::endl;
+
+    auto head_maybe_chunk = nc->receive();
+    auto [body, head] = HttpHead::parse(head_maybe_chunk);
+
+    if (head.headers.find("Transfer-Encoding") == head.headers.end()) {
+        // no more chunks
+        return HttpResponse(head, body);
+    }
+
+    std::string chunked_response;
+
+    while(true) {
+        try {
+            auto chunk = HttpChunk(body);
+            if (chunk.size == 0) {
+                break;
+            } else {
+                chunked_response.append(chunk.data);
+                body = nc->receive();
+            }
+        } catch (...) {
+            //body.append(body);
+            body.append(nc->receive());
+        }
+    };
+
+    return HttpResponse(head, chunked_response);
 }
