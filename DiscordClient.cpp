@@ -14,7 +14,8 @@ const std::string *DiscordClient::find_channelId() {
     std::string ch_message = "/api/v8/guilds/" + this->guildId + "/channels";
 
     auto res_channels = httpClient.get(ch_message);
-    auto [_, json_channels] = Json::parse_value(res_channels.body);
+    std::string_view body_sw(res_channels.body);
+    auto json_channels = Json::parse_value(body_sw);
 
     std::string bot_channel;
     for (auto channel: json_channels.arr()) {
@@ -28,7 +29,8 @@ const std::string *DiscordClient::find_channelId() {
 
 const std::string *DiscordClient::find_guildId() {
     auto res = httpClient.get("/api/v8/users/@me/guilds");
-    auto [_, json] = Json::parse_value(res.body);
+    std::string_view sw(res.body);
+    auto json = Json::parse_value(sw);
     if (json.arr().empty()) {
         return nullptr;
     }

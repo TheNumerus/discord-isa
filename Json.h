@@ -10,8 +10,7 @@
 #include <vector>
 #include <map>
 #include <stdexcept>
-
-// I really hate how easy is this in Rust but impossible in C++
+#include <string_view>
 
 using JsonNumber = std::variant<long, double>;
 
@@ -21,7 +20,6 @@ using JsonObject = std::map<std::string, JsonValue>;
 
 using JsonValueType = std::variant<JsonNumber, bool, std::string, std::vector<JsonValue>, nullptr_t, JsonObject>;
 
-// this **** should not be needed, but ******* C++ is C++
 class JsonValue {
 public:
     JsonValueType value;
@@ -32,15 +30,15 @@ public:
 
 class Json {
 public:
-    static std::pair<std::string, JsonObject> parse_object(std::string);
-    static std::pair<std::string, std::vector<JsonValue>> parse_array(std::string);
-    static std::string parse_whitespace(std::string);
-    static std::pair<std::string, JsonNumber> parse_number(std::string);
-    static std::pair<std::string, nullptr_t> parse_null(std::string);
-    static std::pair<std::string, std::string> parse_string(std::string);
-    static std::pair<std::string, bool> parse_bool(std::string);
-    static std::pair<std::string, JsonValue> parse_value(std::string);
-    static std::pair<std::string, std::pair<std::string, JsonValue>> parse_pair(std::string);
+    static JsonValueType parse_object(std::string_view& i);
+    static JsonValueType parse_array(std::string_view& i);
+    static JsonValueType parse_number(std::string_view& i);
+    static JsonValueType parse_null(std::string_view& i);
+    static JsonValueType parse_string(std::string_view& i);
+    static JsonValueType parse_bool(std::string_view& i);
+    static JsonValue parse_value(std::string_view& i);
+    static void parse_whitespace(std::string_view& i);
+    static std::pair<std::string, JsonValue> parse_pair(std::string_view& i);
 };
 
 #endif //DISCORD_ISA_JSON_H

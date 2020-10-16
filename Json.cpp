@@ -2,26 +2,25 @@
 // Created by pedro on 08.10.20.
 //
 
+#include <sstream>
 #include "Json.h"
 
-// this may be the uglies code I have ever written
-
-
-std::pair<std::string, std::string> Json::parse_string(std::string i) {
+JsonValueType Json::parse_string(std::string_view& i) {
     if (i.find('"') != 0) {
-        throw std::runtime_error("parse error");
+        throw std::runtime_error("JSON parse error, expected start of string literal");
     }
-    auto i2 = i.substr(1);
+    i = i.substr(1);
     std::string s;
     int pos = 0;
-    while(1) {
-        if (i2[pos] == '"') {
+    while (true) {
+        if (i[pos] == '"') {
             pos ++;
-            return std::make_pair(i2.substr(pos), s);
-        } else if (i2[pos] != '\\') {
-            s.append(1, i2[pos]);
+            i = i.substr(pos);
+            return s;
+        } else if (i[pos] != '\\') {
+            s.append(1, i[pos]);
         } else {
-            switch (i2[pos + 1]) {
+            switch (i[pos + 1]) {
                 case '\\':
                     s.append(1, '\\');
                     pos++;
@@ -64,75 +63,77 @@ std::pair<std::string, std::string> Json::parse_string(std::string i) {
     }
 }
 
-std::pair<std::string, std::vector<JsonValue>> Json::parse_array(std::string i) {
-    std::vector<JsonValue> v;
-
+JsonValueType Json::parse_array(std::string_view& i) {
     if (i[0] != '[') {
-        throw std::runtime_error("parse error");
+        std::ostringstream message;
+        message << "JSON parse error, expected '[', found '" << i[0] << "'";
+        throw std::runtime_error(message.str());
     }
 
     i = i.substr(1);
-    i = parse_whitespace(i);
+    parse_whitespace(i);
 
     auto first = true;
+
+    std::vector<JsonValue> v;
 
     while (true) {
         if (i[0] == ']') {
             i = i.substr(1);
-            return std::make_pair(i, v);
+            return v;
         } else {
             if (first) {
                 first = false;
             } else {
                 if (i[0] != ',') {
-                    throw std::runtime_error("parse error");
+                    throw std::runtime_error("JSON parse error, unexpected input");
                 } else {
                     i = i.substr(1);
                 }
             }
 
-            auto [i2, value] = parse_value(i);
+            auto value = parse_value(i);
             v.push_back(value);
-            i = i2;
         }
     }
 }
 
-std::pair<std::string, JsonObject> Json::parse_object(std::string i) {
-    JsonObject o;
-
+JsonValueType Json::parse_object(std::string_view& i) {
     if (i[0] != '{') {
-        throw std::runtime_error("parse error");
+        std::ostringstream message;
+        message << "JSON parse error, expected '{', found '" << i[0] << "'";
+        throw std::runtime_error(message.str());
     }
 
-    auto i2 = i.substr(1);
-    auto i3 = parse_whitespace(i2);
+    i = i.substr(1);
+    parse_whitespace(i);
 
     auto first = true;
 
+    JsonObject o;
+
     while (true) {
-        if (i3[0] == '}') {
-            i3 = i3.substr(1);
-            return std::make_pair(i3, o);
+        if (i[0] == '}') {
+            i = i.substr(1);
+            return o;
         } else {
             if (first) {
                 first = false;
             } else {
-                if (i3[0] != ',') {
-                    throw std::runtime_error("parse error");
+                if (i[0] != ',') {
+                    throw std::runtime_error("JSON parse error, unexpected input");
                 } else {
-                    i3 = i3.substr(1);
+                    i = i.substr(1);
                 }
             }
 
-            auto [i4, pair] = parse_pair(i3);
+            auto pair = parse_pair(i);
             o.insert(pair);
-            i3 = i4;
         }
     }
 }
 
-std::pair<std::string, JsonNumber> Json::parse_number(std::string i) {
+JsonValueType Json::parse_number(std::string_view& i) {
     int count = 0;
     while(true) {
         if ((i[count] >= '0' && i[count] <= '9') || i[count] == 'e' || i[count] == 'E' || i[count] == '.' || i[count] == '-') {
@@ -143,104 +144,86 @@ std::pair<std::string, JsonNumber> Json::parse_number(std::string i) {
     }
 
     if (count == 0) {
-        throw std::runtime_error("parse error");
+        throw std::runtime_error("JSON parse error, number parsing error");
     }
 
-    auto num = i.substr(0, count);
+    std::string num(i.substr(0, count));
 
     try {
         auto i64 = std::stol(num);
-        return std::make_pair(i.substr(count), i64);
+        i = i.substr(count);
+        return i64;
     } catch (...) {
         auto f64 = std::stod(num);
-        return std::make_pair(i.substr(count), f64);
+        i = i.substr(count);
+        return f64;
     }
 }
 
-std::string Json::parse_whitespace(std::string i) {
+void Json::parse_whitespace(std::string_view& i) {
     int count = 0;
     while(true) {
         if (i[count] == '\t' || i[count] == '\r' || i[count] == '\n' || i[count] == ' ') {
             count++;
         } else {
-            return i.substr(count);
+            i = i.substr(count);
+            return;
         }
     }
 }
 
-std::pair<std::string, std::pair<std::string, JsonValue>> Json::parse_pair(std::string i) {
-    i = parse_whitespace(i);
+std::pair<std::string, JsonValue> Json::parse_pair(std::string_view& i) {
+    parse_whitespace(i);
 
-    auto [i2, key] = parse_string(i);
-    i2 = parse_whitespace(i2);
-    if (i2[0] != ':') {
-        throw std::runtime_error("parse error");
+    auto key_gen = parse_string(i);
+    auto key = std::get<std::string>(key_gen);
+    parse_whitespace(i);
+    if (i[0] != ':') {
+        throw std::runtime_error("JSON parse error, expected ':'");
     }
-    i2 = i2.substr(1);
-    auto [i3, value] = parse_value(i2);
-    return std::make_pair(i3, std::make_pair(key, value));
+    i = i.substr(1);
+    auto value = parse_value(i);
+    return std::make_pair(key, value);
 }
 
-std::pair<std::string, JsonValue> Json::parse_value(std::string i) {
-    i = parse_whitespace(i);
+JsonValue Json::parse_value(std::string_view& i) {
+    parse_whitespace(i);
 
     JsonValue val;
-    try{
-        auto [i2, s] = parse_string(i);
-        i = i2;
-        val.value = s;
-    } catch(...) {
-        try {
-            auto [i2, s] = parse_number(i);
-            i = i2;
-            val.value = s;
+
+    JsonValueType(*func[6])(std::string_view&) = {parse_string, parse_number, parse_object, parse_array, parse_bool, parse_null};
+
+    for(auto fun: func) {
+        try{
+            val.value = fun(i);
+
+            parse_whitespace(i);
+            return val;
         } catch(...) {
-            try {
-                auto [i2, s] = parse_object(i);
-                i = i2;
-                val.value = s;
-            } catch(...) {
-                try {
-                    auto [i2, s] = parse_array(i);
-                    i = i2;
-                    val.value = s;
-                } catch(...) {
-                    try {
-                        auto [i2, s] = parse_bool(i);
-                        i = i2;
-                        val.value = s;
-                    } catch(...) {
-                        try {
-                            auto [i2, s] = parse_null(i);
-                            i = i2;
-                            val.value = s;
-                        } catch(...) {
-                            throw std::runtime_error("parse error");
-                        }
-                    }
-                }
-            }
+            continue;
         }
     }
-    i = parse_whitespace(i);
 
-    return std::make_pair(i, val);
+    throw std::runtime_error("JSON parse error, could not find value parser that works");
 }
 
-std::pair<std::string, bool> Json::parse_bool(std::string i) {
+JsonValueType Json::parse_bool(std::string_view& i) {
     if (i.find("true") == 0) {
-        return std::make_pair(i.substr(4), true);
+        i = i.substr(4);
+        return true;
     } else if (i.find("false") == 0) {
-        return std::make_pair(i.substr(5), false);
+        i = i.substr(5);
+        return false;
     }
-    throw std::runtime_error("parse error");
+    throw std::runtime_error("JSON parse error, invalid bool format");
 }
 
-std::pair<std::string, nullptr_t> Json::parse_null(std::string i) {
+JsonValueType Json::parse_null(std::string_view& i) {
     if (i.find("null") == 0) {
-        return std::make_pair(i.substr(4), nullptr);
+        i = i.substr(4);
+        return nullptr;
     }
-    throw std::runtime_error("parse error");
+    throw std::runtime_error("JSON parse error, invalid null format");
 }
 
 std::string JsonValue::string() {
