@@ -46,7 +46,6 @@ bool NetClient::find_discord_ip() {
     int status = sockets::getaddrinfo("discord.com", "https", &hints, &result);
 
     if (status != 0) {
-        //sockets::freeaddrinfo(result);
         return false;
     }
 
@@ -58,44 +57,27 @@ bool NetClient::find_discord_ip() {
 }
 
 bool NetClient::connect() {
-    // check if socket was even created
-    if (this->socket_id == -1) {
-        throw std::logic_error("socket not created");
-    }
     this->ssl = SSL_new(this->ssl_ctx);
     SSL_set_fd(this->ssl, this->socket_id);
     int status = sockets::connect(this->socket_id, this->discord_addr->ai_addr, this->discord_addr->ai_addrlen);
 
     int ssl_conn_res = SSL_connect(this->ssl);
     if (ssl_conn_res != 1) {
-        std::cerr << "error_code: " << SSL_get_error(this->ssl, ssl_conn_res);
+        throw std::runtime_error("SSL error code: " + std::to_string(SSL_get_error(this->ssl, ssl_conn_res)));
     }
     this->connection_made = status == 0;
     return status == 0;
 }
 
 void NetClient::send(std::string message) {
-    // check if socket was even created and connection made
-    if (this->socket_id == -1) {
-        throw std::logic_error("socket not created");
-    }
-
     if (!this->connection_made) {
         this->connect();
     }
 
-    size_t bytes_send = 0;
+    int write_res = SSL_write(this->ssl, message.data(), message.size());
 
-    int write_res = SSL_write_ex(this->ssl, message.data(), message.size(), &bytes_send);
-
-    if (write_res != 1) {
+    if (write_res <= 0) {
         throw std::runtime_error("SSL write error");
-    }
-
-    if (bytes_send == -1) {
-        // TODO handle error
-    } else if (bytes_send != (message.size())) {
-        // TODO message might be big so bytes send will not match message length, so try to resend
     }
 }
 
@@ -104,23 +86,12 @@ std::string NetClient::receive() {
 
     std::string response;
 
-    size_t bytes_received = 0;
-
     int read_res = SSL_read(this->ssl, buffer, 4000);
 
-    if (read_res == 0) {
-        std::cerr << "read error\n";
+    if (read_res <= 0) {
+        throw std::runtime_error("SSL read error");
     }
 
-    if (bytes_received == -1) {
-        // TODO handle error
-    } else if (bytes_received == 0) {
-        //this->connection_made = false;
-    } else {
-        // TODO try to receive more
-    }
-
-    //auto chunk_data =
     response.append(buffer);
     return response;
 }

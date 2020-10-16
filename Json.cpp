@@ -28,6 +28,7 @@ JsonValueType Json::parse_string(std::string_view& i) {
                 case '/':
                     s.append(1, '/');
                     pos++;
+                    break;
                 case '"':
                     s.append(1, '"');
                     pos++;
@@ -53,10 +54,10 @@ JsonValueType Json::parse_string(std::string_view& i) {
                     pos++;
                     break;
                 case 'u':
-
-                default:
-                    // there might be \u0647 like sequences, ignore them
                     pos += 5;
+                    break;
+                default:
+                    throw std::logic_error("JSON parse error, control sequence in string parser not implemented");
             }
         }
         pos++;
@@ -193,10 +194,9 @@ JsonValue Json::parse_value(std::string_view& i) {
 
     JsonValueType(*func[6])(std::string_view&) = {parse_string, parse_number, parse_object, parse_array, parse_bool, parse_null};
 
-    for(auto fun: func) {
+    for(auto fn: func) {
         try{
-            val.value = fun(i);
-
+            val.value = fn(i);
             parse_whitespace(i);
             return val;
         } catch(...) {

@@ -10,6 +10,7 @@
 #include <cstring>
 #include <iostream>
 #include <openssl/ssl.h>
+#include <string>
 
 // NetClient methods would shadow socket functions otherwise
 namespace sockets {
