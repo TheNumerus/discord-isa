@@ -20,7 +20,7 @@ public:
     HttpHead(int code);
 
     std::map<std::string, std::string> headers;
-    static std::pair<std::string, HttpHead> parse(std::string s);
+    static std::pair<std::string_view, HttpHead> parse(std::string_view s);
 
     friend std::ostream &operator<<(std::ostream &os, const HttpHead &header);
 };

@@ -19,7 +19,11 @@ HttpResponse HttpClient::get(const std::string &path) {
     nc->send(message);
 
     auto head_maybe_chunk = nc->receive();
-    auto [body, head] = HttpHead::parse(head_maybe_chunk);
+    std::string_view sw(head_maybe_chunk);
+
+    auto [body_sw, head] = HttpHead::parse(sw);
+    std::string body(body_sw);
+
 
     if (head.headers.find("Transfer-Encoding") == head.headers.end()) {
         // no more chunks
@@ -38,7 +42,6 @@ HttpResponse HttpClient::get(const std::string &path) {
                 body = nc->receive();
             }
         } catch (...) {
-            //body.append(body);
             body.append(nc->receive());
         }
     };
@@ -59,7 +62,10 @@ HttpResponse HttpClient::post(const std::string& path, const std::string& messag
     std::cout << post_message << std::endl;
 
     auto head_maybe_chunk = nc->receive();
-    auto [body, head] = HttpHead::parse(head_maybe_chunk);
+    std::string_view sw(head_maybe_chunk);
+
+    auto [body_sw, head] = HttpHead::parse(head_maybe_chunk);
+    std::string body(body_sw);
 
     if (head.headers.find("Transfer-Encoding") == head.headers.end()) {
         // no more chunks
