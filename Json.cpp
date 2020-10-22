@@ -13,52 +13,12 @@ JsonValueType Json::parse_string(std::string_view& i) {
     std::string s;
     int pos = 0;
     while (true) {
-        if (i[pos] == '"') {
+        if (i[pos] == '"' && i[pos - 1] != '\\') {
             pos ++;
             i = i.substr(pos);
             return s;
-        } else if (i[pos] != '\\') {
-            s.append(1, i[pos]);
         } else {
-            switch (i[pos + 1]) {
-                case '\\':
-                    s.append(1, '\\');
-                    pos++;
-                    break;
-                case '/':
-                    s.append(1, '/');
-                    pos++;
-                    break;
-                case '"':
-                    s.append(1, '"');
-                    pos++;
-                    break;
-                case 'b':
-                    s.append(1, '\b');
-                    pos++;
-                    break;
-                case 'f':
-                    s.append(1, '\f');
-                    pos++;
-                    break;
-                case 'n':
-                    s.append(1, '\n');
-                    pos++;
-                    break;
-                case 'r':
-                    s.append(1, '\r');
-                    pos++;
-                    break;
-                case 't':
-                    s.append(1, '\t');
-                    pos++;
-                    break;
-                case 'u':
-                    pos += 5;
-                    break;
-                default:
-                    throw std::logic_error("JSON parse error, control sequence in string parser not implemented");
-            }
+            s.append(1, i[pos]);
         }
         pos++;
     }
@@ -76,7 +36,7 @@ JsonValueType Json::parse_array(std::string_view& i) {
 
     auto first = true;
 
-    std::vector<JsonValue> v;
+    JsonArray v;
 
     while (true) {
         if (i[0] == ']') {
@@ -192,6 +152,7 @@ JsonValue Json::parse_value(std::string_view& i) {
 
     JsonValue val;
 
+    // I'm weirdly proud of this monstrosity
     JsonValueType(*func[6])(std::string_view&) = {parse_string, parse_number, parse_object, parse_array, parse_bool, parse_null};
 
     for(auto fn: func) {

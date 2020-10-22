@@ -7,6 +7,7 @@
 
 #include "HttpClient.h"
 #include "ArgData.h"
+#include "Json.h"
 #include <pthread.h>
 
 class DiscordClient {
@@ -15,10 +16,10 @@ public:
 
     const std::string* find_guildId();
     const std::string* find_channelId();
-    void run();
+    int run();
 
-    void send_message(std::string message);
-    void get_messages();
+    void send_message(const std::string& message);
+    JsonArray get_messages();
     std::string guildId;
     std::string channelId;
 

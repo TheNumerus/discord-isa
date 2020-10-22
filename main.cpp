@@ -24,13 +24,13 @@ int main(int argc, char *argv[]) {
 
         // run loop
         discordClient.run();
-    } catch (std::exception &e) {
+        CRYPTO_cleanup_all_ex_data();
+        return 0;
+    } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
         CRYPTO_cleanup_all_ex_data();
         return -1;
     }
-    CRYPTO_cleanup_all_ex_data();
-    return 0;
 }
 
 void print_help() {

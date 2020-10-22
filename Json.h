@@ -16,9 +16,11 @@ using JsonNumber = std::variant<long, double>;
 
 class JsonValue;
 
+using JsonArray = std::vector<JsonValue>;
+
 using JsonObject = std::map<std::string, JsonValue>;
 
-using JsonValueType = std::variant<JsonNumber, bool, std::string, std::vector<JsonValue>, nullptr_t, JsonObject>;
+using JsonValueType = std::variant<JsonNumber, bool, std::string, JsonArray, nullptr_t, JsonObject>;
 
 class JsonValue {
 public:
