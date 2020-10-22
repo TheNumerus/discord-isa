@@ -7,7 +7,7 @@
 
 JsonValueType Json::parse_string(std::string_view& i) {
     if (i.find('"') != 0) {
-        throw std::runtime_error("JSON parse error, expected start of string literal");
+        throw JsonException(JsonError::WrongValue);
     }
     i = i.substr(1);
     std::string s;
@@ -26,9 +26,7 @@ JsonValueType Json::parse_string(std::string_view& i) {
 
 JsonValueType Json::parse_array(std::string_view& i) {
     if (i[0] != '[') {
-        std::ostringstream message;
-        message << "JSON parse error, expected '[', found '" << i[0] << "'";
-        throw std::runtime_error(message.str());
+        throw JsonException(JsonError::WrongValue);
     }
 
     i = i.substr(1);
@@ -47,7 +45,7 @@ JsonValueType Json::parse_array(std::string_view& i) {
                 first = false;
             } else {
                 if (i[0] != ',') {
-                    throw std::runtime_error("JSON parse error, unexpected input");
+                    throw JsonException(JsonError::BrokenInput);
                 } else {
                     i = i.substr(1);
                 }
@@ -61,9 +59,7 @@ JsonValueType Json::parse_array(std::string_view& i) {
 
 JsonValueType Json::parse_object(std::string_view& i) {
     if (i[0] != '{') {
-        std::ostringstream message;
-        message << "JSON parse error, expected '{', found '" << i[0] << "'";
-        throw std::runtime_error(message.str());
+        throw JsonException(JsonError::WrongValue);
     }
 
     i = i.substr(1);
@@ -82,7 +78,7 @@ JsonValueType Json::parse_object(std::string_view& i) {
                 first = false;
             } else {
                 if (i[0] != ',') {
-                    throw std::runtime_error("JSON parse error, unexpected input");
+                    throw JsonException(JsonError::BrokenInput);
                 } else {
                     i = i.substr(1);
                 }
@@ -105,7 +101,7 @@ JsonValueType Json::parse_number(std::string_view& i) {
     }
 
     if (count == 0) {
-        throw std::runtime_error("JSON parse error, number parsing error");
+        throw JsonException(JsonError::WrongValue);
     }
 
     std::string num(i.substr(0, count));
@@ -115,9 +111,13 @@ JsonValueType Json::parse_number(std::string_view& i) {
         i = i.substr(count);
         return i64;
     } catch (...) {
-        auto f64 = std::stod(num);
-        i = i.substr(count);
-        return f64;
+        try {
+            auto f64 = std::stod(num);
+            i = i.substr(count);
+            return f64;
+        } catch (...) {
+            throw JsonException(JsonError::BrokenInput);
+        }
     }
 }
 
@@ -140,7 +140,7 @@ std::pair<std::string, JsonValue> Json::parse_pair(std::string_view& i) {
     auto key = std::get<std::string>(key_gen);
     parse_whitespace(i);
     if (i[0] != ':') {
-        throw std::runtime_error("JSON parse error, expected ':'");
+        throw JsonException(JsonError::BrokenInput);
     }
     i = i.substr(1);
     auto value = parse_value(i);
@@ -160,12 +160,16 @@ JsonValue Json::parse_value(std::string_view& i) {
             val.value = fn(i);
             parse_whitespace(i);
             return val;
-        } catch(...) {
-            continue;
+        } catch(const JsonException& e) {
+            if (e.err_type() == JsonError::WrongValue) {
+                continue;
+            } else {
+                throw JsonException(JsonError::BrokenInput);
+            }
         }
     }
 
-    throw std::runtime_error("JSON parse error, could not find value parser that works");
+    throw JsonException(JsonError::BrokenInput);
 }
 
 JsonValueType Json::parse_bool(std::string_view& i) {
@@ -176,7 +180,7 @@ JsonValueType Json::parse_bool(std::string_view& i) {
         i = i.substr(5);
         return false;
     }
-    throw std::runtime_error("JSON parse error, invalid bool format");
+    throw JsonException(JsonError::WrongValue);
 }
 
 JsonValueType Json::parse_null(std::string_view& i) {
@@ -184,7 +188,7 @@ JsonValueType Json::parse_null(std::string_view& i) {
         i = i.substr(4);
         return nullptr;
     }
-    throw std::runtime_error("JSON parse error, invalid null format");
+    throw JsonException(JsonError::WrongValue);
 }
 
 std::string JsonValue::string() {

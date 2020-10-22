@@ -11,6 +11,7 @@
 #include <map>
 #include <stdexcept>
 #include <string_view>
+#include "JsonException.h"
 
 using JsonNumber = std::variant<long, double>;
 
