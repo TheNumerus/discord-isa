@@ -5,7 +5,7 @@
 #include "HttpChunk.h"
 
 HttpChunk::HttpChunk(std::string i) {
-    int div = i.find("\r\n");
+    size_t div = i.find("\r\n");
     if (div == i.npos) {
         throw std::runtime_error("HTTP parse error");
     }
@@ -14,7 +14,8 @@ HttpChunk::HttpChunk(std::string i) {
     this->size = std::strtol(num_str.c_str(), nullptr, 16);
 
     this->data = i.substr(div + 2, i.size() - (div + 2) - 2);
-    if (this->size != this->data.size()) {
+    size_t needed_len = this->data.size();
+    if (this->size != needed_len) {
         throw std::runtime_error("HTTP parse error");
     }
 }

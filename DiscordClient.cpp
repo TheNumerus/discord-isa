@@ -77,15 +77,19 @@ void *loop(void* args) {
     auto dc = (DiscordClient*)(args);
 
     try {
-        auto messages = dc->get_messages();
+        while(true) {
+            auto messages = dc->get_messages();
 
-        for (auto message: messages) {
-            auto obj = message.obj();
-            auto content = obj["content"].string();
-            auto user = obj["author"].obj()["username"].string();
-            auto id = obj["id"].string();
+            for (auto message: messages) {
+                auto obj = message.obj();
+                auto content = obj["content"].string();
+                auto user = obj["author"].obj()["username"].string();
+                auto id = obj["id"].string();
 
-            std::cout << "message #" << id << " from \"" << user << "\": " << content << std::endl;
+                std::cout << "message #" << id << " from \"" << user << "\": " << content << std::endl;
+            }
+
+            //sleep(1);
         }
 
         //dc->send_message(R"({"content": ")" + messages[0].obj()["content"].string() + R"("})");

@@ -12,7 +12,7 @@ class HttpChunk {
 public:
     HttpChunk(std::string);
 
-    int size;
+    long unsigned int size;
     std::string data;
 };
 

@@ -9,6 +9,7 @@
 #include "ArgData.h"
 #include "Json.h"
 #include <pthread.h>
+#include <unistd.h>
 
 class DiscordClient {
 public:
