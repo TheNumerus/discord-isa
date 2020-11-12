@@ -56,47 +56,51 @@ JsonArray DiscordClient::get_messages() {
     return std::get<JsonArray>(json);
 }
 
-int DiscordClient::run() {
-    pthread_t pthread;
-
-    pthread_create(&pthread, nullptr, loop, this);
-
-    void* thread_ret;
-
-    pthread_join(pthread, &thread_ret);
-
-    int ret = *(int*)thread_ret;
-
-    delete (int*)thread_ret;
-
-    return ret;
+JsonArray DiscordClient::get_messages_after(const std::string& id) {
+    auto path = "/api/v8/channels/" + this->channelId + "/messages?after=" + id;
+    auto res = httpClient.get(path);
+    std::string_view  sw(res.body);
+    auto json = Json::parse_array(sw);
+    return std::get<JsonArray>(json);
 }
 
-void *loop(void* args) {
-    // I really hate this
-    auto dc = (DiscordClient*)(args);
-
+void DiscordClient::loop() {
+    std::string newest_id;
     try {
         while(true) {
-            auto messages = dc->get_messages();
-
-            for (auto message: messages) {
-                auto obj = message.obj();
-                auto content = obj["content"].string();
-                auto user = obj["author"].obj()["username"].string();
-                auto id = obj["id"].string();
-
-                std::cout << "message #" << id << " from \"" << user << "\": " << content << std::endl;
+            JsonArray messages;
+            if (newest_id.empty()) {
+                messages = this->get_messages();
+            } else {
+                messages = this->get_messages_after(newest_id);
             }
 
-            //sleep(1);
+            if (!messages.empty()) {
+                for (auto ri = messages.rbegin(); ri != messages.rend(); ++ri) {
+                    auto message = *ri;
+                    auto obj = message.obj();
+                    auto content = obj["content"].string();
+                    auto user = obj["author"].obj()["username"].string();
+                    auto id = obj["id"].string();
+
+                    // TODO not respond to self
+
+                    if (content.find("bot") != content.npos && !newest_id.empty() && user.find("bot") == user.npos) {
+                        if (this->verbose) {
+                            std::cout << "#isa-bot - " << user << ": " << content << std::endl;
+                        }
+
+                        std::string echo = R"({"content": "echo: )" + user + " - " + content + R"("})";
+                        this->send_message(echo);
+                    }
+                }
+                newest_id = messages[0].obj()["id"].string();
+            }
+
+            sleep(1);
         }
-
-        //dc->send_message(R"({"content": ")" + messages[0].obj()["content"].string() + R"("})");
     } catch (const std::exception& e) {
-        std::cerr << "Error in child thread: " << e.what() << std::endl;
-        return new int(-1);
+        // TODO
+        std::cerr << "Error: " << e.what() << std::endl;
     }
-
-    return new int(0);
 }

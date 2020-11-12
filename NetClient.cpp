@@ -82,11 +82,11 @@ void NetClient::send(std::string message) {
 }
 
 std::string NetClient::receive() {
-    char buffer[4000] = {0};
+    char buffer[8000] = {0};
 
     std::string response;
 
-    int read_res = SSL_read(this->ssl, buffer, 4000);
+    int read_res = SSL_read(this->ssl, buffer, 8000);
 
     if (read_res <= 0) {
         throw std::runtime_error("SSL read error");

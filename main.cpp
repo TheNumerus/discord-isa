@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         //discordClient.send_message(R"({"content": "Opli je debilek", "embed": {"title": "sedel na birellu", "description": "a blbe se tlemil"}})");
 
         // run loop
-        discordClient.run();
+        discordClient.loop();
         CRYPTO_cleanup_all_ex_data();
         return 0;
     } catch (const std::exception &e) {

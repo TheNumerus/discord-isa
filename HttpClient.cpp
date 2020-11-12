@@ -59,12 +59,10 @@ HttpResponse HttpClient::post(const std::string& path, const std::string& messag
                           "Authorization: Bot " + *this->token + "\r\n\r\n" + message;
     nc->send(post_message);
 
-    std::cout << post_message << std::endl;
-
     auto head_maybe_chunk = nc->receive();
     std::string_view sw(head_maybe_chunk);
 
-    auto [body_sw, head] = HttpHead::parse(head_maybe_chunk);
+    auto [body_sw, head] = HttpHead::parse(sw);
     std::string body(body_sw);
 
     if (head.headers.find("Transfer-Encoding") == head.headers.end()) {
