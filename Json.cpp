@@ -202,3 +202,15 @@ std::vector<JsonValue> JsonValue::arr() {
 JsonObject JsonValue::obj() {
     return std::get<JsonObject>(value);
 }
+
+bool JsonValue::boolean() {
+    return std::get<bool>(value);
+}
+
+bool JsonValue::is_null() {
+    return std::holds_alternative<nullptr_t>(value);
+}
+
+JsonNumber JsonValue::number() {
+    return std::get<JsonNumber>(value);
+}

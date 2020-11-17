@@ -17,10 +17,19 @@ int main(int argc, char *argv[]) {
 
         DiscordClient discordClient(args);
         // init bot
-        discordClient.find_guildId();
-        discordClient.find_channelId();
+        auto guild = discordClient.find_guildId();
+        if (guild == nullptr) {
+            std::cerr << "Bot not in any guild, shutting down." << std::endl;
+            CRYPTO_cleanup_all_ex_data();
+            exit(-1);
+        }
 
-        //discordClient.send_message(R"({"content": "Opli je debilek", "embed": {"title": "sedel na birellu", "description": "a blbe se tlemil"}})");
+        auto channel = discordClient.find_channelId();
+        if (channel == nullptr) {
+            std::cerr << "Did not found any channel with name '#isa-bot', shutting down." << std::endl;
+            CRYPTO_cleanup_all_ex_data();
+            exit(-1);
+        }
 
         // run loop
         discordClient.loop();

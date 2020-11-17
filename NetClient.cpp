@@ -77,7 +77,9 @@ void NetClient::send(std::string message) {
     int write_res = SSL_write(this->ssl, message.data(), message.size());
 
     if (write_res <= 0) {
-        throw std::runtime_error("SSL write error");
+        int err = SSL_get_error(this->ssl, write_res);
+        std::string message = "SSL write error " + std::to_string(err);
+        throw std::runtime_error(message);
     }
 }
 
@@ -89,7 +91,9 @@ std::string NetClient::receive() {
     int read_res = SSL_read(this->ssl, buffer, 8000);
 
     if (read_res <= 0) {
-        throw std::runtime_error("SSL read error");
+        int err = SSL_get_error(this->ssl, read_res);
+        std::string message = "SSL read error " + std::to_string(err);
+        throw std::runtime_error(message);
     }
 
     response.append(buffer);

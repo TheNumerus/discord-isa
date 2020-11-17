@@ -29,6 +29,9 @@ public:
     std::string string();
     std::vector<JsonValue> arr();
     JsonObject obj();
+    bool boolean();
+    bool is_null();
+    JsonNumber number();
 };
 
 class Json {

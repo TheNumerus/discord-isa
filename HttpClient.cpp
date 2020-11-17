@@ -63,6 +63,24 @@ HttpResponse HttpClient::post(const std::string& path, const std::string& messag
     std::string_view sw(head_maybe_chunk);
 
     auto [body_sw, head] = HttpHead::parse(sw);
+
+
+    // check for rate limit
+    if (head.code == 429) {
+        auto wait_str = head.headers["x-ratelimit-reset-after"];
+        auto wait_f = std::strtod(wait_str.c_str(), nullptr);
+        sleep(((int)wait_f) + 1);
+
+        nc->send(post_message);
+
+        head_maybe_chunk = nc->receive();
+        sw = std::string_view(head_maybe_chunk);
+
+        auto head_res = HttpHead::parse(sw);
+        body_sw = std::get<0>(head_res);
+        head = std::get<1>(head_res);
+    }
+
     std::string body(body_sw);
 
     if (head.headers.find("Transfer-Encoding") == head.headers.end()) {

@@ -69,6 +69,9 @@ int res_code(std::string_view& i) {
     } else if (sub == "411 Length Required") {
         i = i.substr(21);
         return 411;
+    } else if (sub == "429 Too Many Requests") {
+        i = i.substr(23);
+        return 429;
     } else {
         throw std::runtime_error("Unknown or not implemented HTTP response code");
     }
