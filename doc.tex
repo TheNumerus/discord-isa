@@ -1,0 +1,66 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage[left=2cm, top=2cm]{geometry}
+\usepackage{hyperref}
+
+\begin{document}
+
+\begin{titlepage}
+   \begin{center}
+ \vfill
+ ISA projekt\\
+ \vspace{20pt}
+ \Huge
+ Discord bot
+\Large
+
+  \vspace{20pt}
+ Petr Volf
+
+  \vfill
+   \normalsize
+   Vysoké učení technické\\
+   Fakulta informačních technologií\\
+3BIT 2020/2021
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\section{Úvod}
+Cílem projektu bylo vytvořit bota, který odpovídá na zprávy v Discord kanálu. Jako jazyk řešení byl vybrán jazyk \verb|C++|. Pro komunikaci se serverem bylo potřeba vytvořit připojení pomocí BSD socketů. BSD sockety jsou abstrakce pro cíl síťové komunikace, která je implmentovaná jako knihovna ve většině operačních systémů. Dále bylo potřeba, zpracovat různé typy protokolů bežných v síťovém prostředí. Mezi ně patří HTTP a JSON. HTTP je aplikační protokol sloužící pro přenos dokumentů. JSON je jednoduchý formát pro přenos dat. Nakonec bylo potřeba posílat specifické požadavky a podle jejich odpovědi řídit aplikaci. 
+
+\section{Implementace}
+Implementaci jsem začal s parsovnáním argumentů. Následně jsem řešil síťové připojení přes sockety. Potom jsem začal zpracovávání HTTP požadavků. Oba parsery jsem si prvně navrhl jako samostatné projekty v jiném programovacím jazyce a následně je naportoval do \verb|C++|. Nakonec jsem řešil samotné chování bota. Jako verzi \verb|C++| jsem si vybral \verb|C++17|, protože tento standart je relativně nový, ale podporovaný téměř všude.
+
+\subsection{Návrh aplikace}
+O návrh jsem se nějak zvlášť nestaral, jenom jsem odděloval funkčně odlišné části do svých vlastních souborů a tříd. Ve výsledku je hlavní třídou \verb|DiscordClient|, ve které jsou třídy co se starají o funcionalitu na nižší úrovni uloženy jako položky.
+
+\subsection{Síťové rozhraní}
+Siťové komunikační rozhraní je tvořeno třídou \verb|NetClient|. Tato třída funguje jako C++ wrapper pro BSD sockety s SSL podporou. Discord API podporuje pouze komunikaci přes HTTPS, takže byla použita knihovna \verb|OpenSSL|. \verb|NetClient| při konstrukci otevře socket a najde IP adresu Discord serveru. Při prvním odeslaném požadavku se socket připojí a zůstane otevřený. Komikace se serverem probíhá přes metody \verb|send| a \verb|recieve|. O správné používání těchto metod se \verb|NetClient| nestará.
+
+\subsection{HTTP parser}
+O zpracování dat ze třídy \verb|NetClient| se stará třída \verb|HTTPClient|. Tato třída nabízí dvě metody, \verb|get|~a~\verb|post|. Je také schopná dekódovat \verb|chunked transfer encoding| protože Discord API někdy vrací odpovědi v tomto tvaru. Pro parsování jednotlivých částí odpovědi slouží třída \verb|HTTPChunk|. Pro parsování hlavičky zase slouží třída \verb|HTTPHead|.
+\pagebreak
+\subsection{JSON parser}
+JSON parser je implmentován jako rekurzivní parser. Základním typem v parseru jsou třídy \verb|JsonValue| a \verb|JsonValueType|, které slouží k uložení hodnot. \verb|JsonValueType| je specifická vezre třídy \verb|std::variant|, která umožňuje uložít více různých typů do stejné proměnné. Funguje jako typově bezpečná struktura podobná \verb|union| z jazyka \verb|C|. Díky tomu je program méně paměťově náročný. Tento typ jsem zvolil, protože jsem  oba parsery navrhoval v programovacím jazyce \verb|Rust|, ve kterém jsou takové typy běžné. Třída \verb|JsonValue| pak obsahuje instanci typu \verb|JsonValueType| a několik pomocných metod, protože v~\verb|C++| není práce s variantami zrovna ergonomická. JSON objekty jsou implementovány jako \verb|std::map<>| a~pole jako \verb|std::vector<>|. 
+
+\subsection{Discord klient}
+Třída \verb|DiscordClient| konzumuje HTTP REST API nabízené Discordem. Tato třída obsahuje hlaně metody pořebné ke čtení a posílání zpráv a získání identifikátorů potřebných k tomu. Hlavní metodou je \verb|loop|, která obsahuje samotné chování bota. Bot si pamatuje ID posledně přečtené zprávy a podle toho určuje které zprávy stáhnout ze serveru v dalším kroku. Bot posílá požadavek o nové zprávy nejvíckrát jednou za vteřinu.
+
+\subsection{Testování}
+Testy jsem napsal akorát pro oba parsery, protože síťová funkcionalita by se testovala složitě.
+Testy se spouští pomocí \verb|make test|. Testy jsou psány jako \verb|C++| program odděleně od bota. Při neúspěchu testu se zobrazí očekaváný vstup, získaný vstup a číslo řádku s testem který neprošel. 
+
+\section{Popis programu}
+Program má jeden povinný parametr \verb|-t| (token), za který uživatel předá programu autorizační klíč bota. Dále může přidat parametr \verb|-v|, (verbose), který nazvačuje že se všechny zprávy budou ukazovat v~konzoli na standartním výstupu. Bot vytvoří připojení, následně získá info o kanálu, kde má naslouchat zprávám a začne odpovídat. Bot odpovídá na zprávy dokud není ukončet přerušením v konzoli, nebo dokud nenastane nějaká síťová chyba.
+
+\section{Zdroje}
+\begin{itemize}
+\item Discord Developer Portal - \url{https://discord.com/developers/docs/intro}
+\item Chunked Transfer Encoding - Wikipedia - \url{https://en.wikipedia.org/wiki/Chunked_transfer_encoding}
+\item OpenSSL manual - \url{https://www.openssl.org/docs/manmaster/man7/ssl.html}
+\item Beej's Guide to Network Programming - \url{https://beej.us/guide/bgnet/html}
+\end{itemize}
+\end{document}

@@ -8,6 +8,9 @@
 #include <string>
 #include <stdexcept>
 
+/**
+ * HTTP chunked transfer encoding handler
+ */
 class HttpChunk {
 public:
     HttpChunk(std::string);

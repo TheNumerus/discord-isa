@@ -13,6 +13,9 @@
 
 // most of this code was written in Rust first, then ported
 
+/**
+ * Parser for HTTP responses
+ */
 class HttpHead {
 public:
     int code;

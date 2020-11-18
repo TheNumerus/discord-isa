@@ -13,24 +13,28 @@
 #include <string>
 
 // NetClient methods would shadow socket functions otherwise
-namespace sockets {
+// but eva does not like that
+//namespace sockets {
     #include <sys/socket.h>
     #include <netinet/in.h>
     #include <netdb.h>
     #include <arpa/inet.h>
-}
+//}
 
+/**
+ * Wrapper for socket and ssl functionality
+ */
 class NetClient {
 public:
     NetClient();
-    bool connect();
+    bool conn();
     void send(std::string message);
     std::string receive();
 
     virtual ~NetClient();
 
 private:
-    struct sockets::addrinfo* discord_addr = nullptr;
+    struct addrinfo* discord_addr = nullptr;
     int socket_id = -1;
     bool connection_made = false;
 

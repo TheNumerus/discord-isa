@@ -4,7 +4,6 @@
 
 #include "ArgData.h"
 
-
 ArgData::ArgData(int argc, char **argv) {
     // copy args to vector
     std::vector<std::string> args;

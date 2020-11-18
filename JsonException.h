@@ -8,17 +8,23 @@
 
 #include <stdexcept>
 
+/**
+ * Error type
+ */
 enum JsonError{
     WrongValue,
     BrokenInput
 };
 
+/**
+ * Custom JSON exception
+ */
 class JsonException: public std::runtime_error {
 public:
     explicit JsonException(JsonError);
-    [[nodiscard]] const char *what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW override;
+    const char *what() const noexcept override;
 
-    [[nodiscard]] JsonError err_type() const;
+    JsonError err_type() const;
 
 private:
     JsonError e;

@@ -5,6 +5,13 @@
 #include <sstream>
 #include "Json.h"
 
+/**
+ * Parser for strings
+ *
+ * Does not escape or unescape
+ * @param i - input
+ * @return parsed string
+ */
 JsonValueType Json::parse_string(std::string_view& i) {
     if (i.find('"') != 0) {
         throw JsonException(JsonError::WrongValue);
@@ -24,6 +31,11 @@ JsonValueType Json::parse_string(std::string_view& i) {
     }
 }
 
+/**
+ * Parser for arrays
+ * @param i - input
+ * @return parsed array
+ */
 JsonValueType Json::parse_array(std::string_view& i) {
     if (i[0] != '[') {
         throw JsonException(JsonError::WrongValue);
@@ -57,6 +69,11 @@ JsonValueType Json::parse_array(std::string_view& i) {
     }
 }
 
+/**
+ * Parser for objects
+ * @param i - input
+ * @return parsed object
+ */
 JsonValueType Json::parse_object(std::string_view& i) {
     if (i[0] != '{') {
         throw JsonException(JsonError::WrongValue);
@@ -90,6 +107,11 @@ JsonValueType Json::parse_object(std::string_view& i) {
     }
 }
 
+/**
+ * Parser for numbers
+ * @param i - input
+ * @return parsed number
+ */
 JsonValueType Json::parse_number(std::string_view& i) {
     int count = 0;
     while(true) {
@@ -121,6 +143,10 @@ JsonValueType Json::parse_number(std::string_view& i) {
     }
 }
 
+/**
+ * Parser for white space
+ * @param i - input
+ */
 void Json::parse_whitespace(std::string_view& i) {
     int count = 0;
     while(true) {
@@ -133,6 +159,11 @@ void Json::parse_whitespace(std::string_view& i) {
     }
 }
 
+/**
+ * Parser for key: value pairs
+ * @param i - input
+ * @return parsed pair
+ */
 std::pair<std::string, JsonValue> Json::parse_pair(std::string_view& i) {
     parse_whitespace(i);
 
@@ -147,6 +178,13 @@ std::pair<std::string, JsonValue> Json::parse_pair(std::string_view& i) {
     return std::make_pair(key, value);
 }
 
+/**
+ * Parser for any JSON value
+ *
+ * Will try to use any of the other specific type parsers until one succeeds
+ * @param i - input
+ * @return parsed value
+ */
 JsonValue Json::parse_value(std::string_view& i) {
     parse_whitespace(i);
 
@@ -172,6 +210,11 @@ JsonValue Json::parse_value(std::string_view& i) {
     throw JsonException(JsonError::BrokenInput);
 }
 
+/**
+ * Parser for bool values
+ * @param i - input
+ * @return parsed bool
+ */
 JsonValueType Json::parse_bool(std::string_view& i) {
     if (i.find("true") == 0) {
         i = i.substr(4);
@@ -183,34 +226,63 @@ JsonValueType Json::parse_bool(std::string_view& i) {
     throw JsonException(JsonError::WrongValue);
 }
 
+/**
+ * Parser for null values
+ * @param i - input
+ * @return parsed null
+ */
 JsonValueType Json::parse_null(std::string_view& i) {
     if (i.find("null") == 0) {
         i = i.substr(4);
-        return nullptr;
+        return JsonNull();
     }
     throw JsonException(JsonError::WrongValue);
 }
 
+/**
+ * String access function
+ * @return string
+ */
 std::string JsonValue::string() {
     return std::get<std::string>(value);
 }
 
+/**
+ * Array access function
+ * @return array
+ */
 std::vector<JsonValue> JsonValue::arr() {
     return std::get<std::vector<JsonValue>>(value);
 }
 
+/**
+ * Object access function
+ * @return object
+ */
 JsonObject JsonValue::obj() {
     return std::get<JsonObject>(value);
 }
 
+/**
+ * Bool access function
+ * @return bool
+ */
 bool JsonValue::boolean() {
     return std::get<bool>(value);
 }
 
+/**
+ * Checks if value is null
+ * @return is value null?
+ */
 bool JsonValue::is_null() {
-    return std::holds_alternative<nullptr_t>(value);
+    return std::holds_alternative<JsonNull>(value);
 }
 
+/**
+ * Number access function
+ * @return number
+ */
 JsonNumber JsonValue::number() {
     return std::get<JsonNumber>(value);
 }

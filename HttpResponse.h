@@ -11,6 +11,9 @@
 #include <ostream>
 #include "HttpHead.h"
 
+/**
+ * Data class for HTTP responses
+ */
 class HttpResponse {
 public:
     HttpResponse(HttpHead head, std::string body);

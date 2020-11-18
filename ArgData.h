@@ -12,6 +12,9 @@
 #include <vector>
 #include <stdexcept>
 
+/**
+ * Data class for program arguments
+ */
 class ArgData {
 public:
     ArgData(int argc, char *argv[]);

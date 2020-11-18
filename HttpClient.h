@@ -10,6 +10,9 @@
 #include "HttpResponse.h"
 #include "HttpHead.h"
 
+/**
+ * HTTP 1.1 client, not very great or customiazble
+ */
 class HttpClient {
 public:
     HttpClient(const std::shared_ptr<std::string>&);

@@ -4,15 +4,25 @@
 
 #include "DiscordClient.h"
 
-void *loop(void* args);
-
 DiscordClient::DiscordClient(const ArgData &args)
         : httpClient(args.token), verbose(args.verbose_output) {}
 
+/**
+ * Will try to find '#isa-bot' channel in active guild
+ * @return channel ID, if any was found
+ */
 const std::string *DiscordClient::find_channelId() {
+    if (this->guildId.empty()) {
+        return nullptr;
+    }
     std::string ch_message = "/api/v8/guilds/" + this->guildId + "/channels";
 
     auto res_channels = httpClient.get(ch_message);
+
+    if (res_channels.head.code == 401) {
+        throw std::runtime_error("HTTP 401 Unauthorized, might be invalid token");
+    }
+
     std::string_view body_sw(res_channels.body);
     auto json_channels = Json::parse_value(body_sw);
 
@@ -26,8 +36,15 @@ const std::string *DiscordClient::find_channelId() {
     return nullptr;
 }
 
+/**
+ * Will try to find a guild ID
+ * @return Guild ID, if any was found, else `nullptr`
+ */
 const std::string *DiscordClient::find_guildId() {
     auto res = httpClient.get("/api/v8/users/@me/guilds");
+    if (res.head.code == 401) {
+        throw std::runtime_error("HTTP 401 Unauthorized, might be invalid token");
+    }
     std::string_view sw(res.body);
     auto json = Json::parse_value(sw);
     if (json.arr().empty()) {
@@ -38,7 +55,14 @@ const std::string *DiscordClient::find_guildId() {
     return &this->guildId;
 }
 
+/**
+ * Sends a message to '#isa-bot' channel, if any was found previously
+ * @param message - JSON message which will be sent
+ */
 void DiscordClient::send_message(const std::string& message) {
+    if (this->channelId.empty()) {
+        return;
+    }
     std::string path = "/api/v8/channels/" + this->channelId + "/messages";
 
     auto res_message = httpClient.post(path, message);
@@ -48,6 +72,10 @@ void DiscordClient::send_message(const std::string& message) {
     }
 }
 
+/**
+ * Returns recent messages from active channel
+ * @return messages
+ */
 JsonArray DiscordClient::get_messages() {
     auto path = "/api/v8/channels/" + this->channelId + "/messages";
     auto res = httpClient.get(path);
@@ -56,6 +84,11 @@ JsonArray DiscordClient::get_messages() {
     return std::get<JsonArray>(json);
 }
 
+/**
+ * Returns messages sent after given message id
+ * @param id - message id
+ * @return messages
+ */
 JsonArray DiscordClient::get_messages_after(const std::string& id) {
     auto path = "/api/v8/channels/" + this->channelId + "/messages?after=" + id;
     auto res = httpClient.get(path);
@@ -64,6 +97,11 @@ JsonArray DiscordClient::get_messages_after(const std::string& id) {
     return std::get<JsonArray>(json);
 }
 
+/**
+ * Main bot function
+ *
+ * Will loop and respond to messages
+ */
 void DiscordClient::loop() {
     std::string newest_id;
     try {
@@ -83,9 +121,7 @@ void DiscordClient::loop() {
                     auto user = obj["author"].obj()["username"].string();
                     auto id = obj["id"].string();
 
-                    // TODO not respond to self
-
-                    if (content.find("bot") != content.npos && !newest_id.empty() && user.find("bot") == user.npos) {
+                    if (!newest_id.empty() && user.find("bot") == user.npos) {
                         if (this->verbose) {
                             std::cout << "#isa-bot - " << user << ": " << content << std::endl;
                         }

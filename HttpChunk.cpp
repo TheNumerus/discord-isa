@@ -4,6 +4,10 @@
 
 #include "HttpChunk.h"
 
+/**
+ * Constructor for HTTP data chunk, will throw exception if input data is not parsable
+ * @param i - input string
+ */
 HttpChunk::HttpChunk(std::string i) {
     size_t div = i.find("\r\n");
     if (div == i.npos) {

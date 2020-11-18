@@ -11,6 +11,7 @@
 #include <map>
 #include <stdexcept>
 #include <string_view>
+#include <cstddef>
 #include "JsonException.h"
 
 using JsonNumber = std::variant<long, double>;
@@ -21,8 +22,17 @@ using JsonArray = std::vector<JsonValue>;
 
 using JsonObject = std::map<std::string, JsonValue>;
 
-using JsonValueType = std::variant<JsonNumber, bool, std::string, JsonArray, nullptr_t, JsonObject>;
+// eva does not like nullptr_t for some reason
+class JsonNull {
+};
 
+using JsonValueType = std::variant<JsonNumber, bool, std::string, JsonArray, JsonNull, JsonObject>;
+
+/**
+ * Main JSON data class
+ *
+ * Can hold any valid type of value, getter methods will throw exception if user tries to access data type that is not stored
+ */
 class JsonValue {
 public:
     JsonValueType value;
@@ -34,6 +44,12 @@ public:
     JsonNumber number();
 };
 
+/**
+ * Helper class for parsing functions
+ *
+ * All parsers will modify string view if value was successfully parsed
+ * May throw JSOMException if parser cannot parse value, or input is mangled
+ */
 class Json {
 public:
     static JsonValueType parse_object(std::string_view& i);

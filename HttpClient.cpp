@@ -10,6 +10,11 @@ HttpClient::HttpClient(const std::shared_ptr<std::string>& token) {
     this->nc = std::make_unique<NetClient>();
 }
 
+/**
+ * HTTP GET method handler
+ * @param path - path to set request to
+ * @return parsed http response
+ */
 HttpResponse HttpClient::get(const std::string &path) {
     std::string message = "GET " + path + " HTTP/1.1\r\n" +
         "Host: discord.com\r\n" +
@@ -49,6 +54,12 @@ HttpResponse HttpClient::get(const std::string &path) {
     return HttpResponse(head, chunked_response);
 }
 
+/**
+ * HTTP POST method handler
+ * @param path - path to send request to
+ * @param message - body of request
+ * @return
+ */
 HttpResponse HttpClient::post(const std::string& path, const std::string& message) {
     std::string post_message = "POST " + path + " HTTP/1.1\r\n" +
                           "Host: discord.com\r\n" +
@@ -63,7 +74,6 @@ HttpResponse HttpClient::post(const std::string& path, const std::string& messag
     std::string_view sw(head_maybe_chunk);
 
     auto [body_sw, head] = HttpHead::parse(sw);
-
 
     // check for rate limit
     if (head.code == 429) {

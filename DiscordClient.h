@@ -10,6 +10,9 @@
 #include "Json.h"
 #include <unistd.h>
 
+/**
+ * Class for communicating with Discord API
+ */
 class DiscordClient {
 public:
     DiscordClient(const ArgData &args);

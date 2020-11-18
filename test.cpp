@@ -59,6 +59,7 @@ const char* JSON = R"({
     "editor.codeActionsOnSave": null
 })";
 
+// assert macro for output
 #define assert_eq(left, right) { \
     if (left != right) { \
         std::cerr << RED << "[test.cpp:" << __LINE__ << "] ERROR: " << RESET << "Expected: \"" << right << "\", got: \"" << left << "\"" << std::endl; \

@@ -4,39 +4,13 @@
 
 #include "HttpHead.h"
 
-void find_and_consume(std::string_view& i, const std::string& n);
-int res_code(std::string_view& i);
-std::optional<std::pair<std::string, std::string>> parse_header(std::string_view& i);
-
-std::pair<std::string_view, HttpHead> HttpHead::parse(std::string_view i) {
-    HttpHead hh(200);
-
-    find_and_consume(i, "HTTP/1.1 ");
-
-    hh.code = res_code(i);
-
-    while (auto header = parse_header(i)) {
-        hh.headers.insert(*header);
-    }
-
-    // remove head and body separator
-    i = i.substr(2, i.size() - 2);
-
-    return std::make_pair(i, hh);
-}
-
-std::ostream &operator<<(std::ostream &os, const HttpHead &header) {
-    os << "HttpHead: {\n    code: " << header.code << ",\n    headers: {\n";
-    for (auto [key, value]: header.headers) {
-        os << "        \"" << key << "\": \"" << value << "\",\n";
-    }
-    os << "    }\n}\n";
-    return os;
-}
-
 HttpHead::HttpHead(int code) : code(code) {}
 
-
+/**
+ * Will remove given substring from the beginning of input
+ * @param i - input
+ * @param n - string to remove
+ */
 void find_and_consume(std::string_view& i, const std::string& n) {
     if(i.substr(0, n.size()) == n) {
         i = i.substr(n.size(), i.size() - n.size());
@@ -45,6 +19,11 @@ void find_and_consume(std::string_view& i, const std::string& n) {
     throw std::runtime_error("parse error, could not found " + n);
 }
 
+/**
+ * Parse HTTP response code
+ * @param i - input
+ * @return code
+ */
 int res_code(std::string_view& i) {
     // find end of line after http status code
     size_t found = i.find("\r\n");
@@ -77,6 +56,11 @@ int res_code(std::string_view& i) {
     }
 }
 
+/**
+ * Function for parsing single HTTP header
+ * @param i - input
+ * @return pair of key: value
+ */
 std::optional<std::pair<std::string, std::string>> parse_header(std::string_view& i) {
     // no header left
     if (i[0] == '\r') {
@@ -89,4 +73,35 @@ std::optional<std::pair<std::string, std::string>> parse_header(std::string_view
     auto value = std::string(value_and_rest.substr(0, newline));
     i = value_and_rest.substr(value.size() + 2);
     return std::make_pair(key, value);
+}
+
+/**
+ * Main HTTP parsing function
+ * @param i - input
+ * @return pair of response body and parsed HTTP head
+ */
+std::pair<std::string_view, HttpHead> HttpHead::parse(std::string_view i) {
+    HttpHead hh(200);
+
+    find_and_consume(i, "HTTP/1.1 ");
+
+    hh.code = res_code(i);
+
+    while (auto header = parse_header(i)) {
+        hh.headers.insert(*header);
+    }
+
+    // remove head and body separator
+    i = i.substr(2, i.size() - 2);
+
+    return std::make_pair(i, hh);
+}
+
+std::ostream &operator<<(std::ostream &os, const HttpHead &header) {
+    os << "HttpHead: {\n    code: " << header.code << ",\n    headers: {\n";
+    for (auto [key, value]: header.headers) {
+        os << "        \"" << key << "\": \"" << value << "\",\n";
+    }
+    os << "    }\n}\n";
+    return os;
 }
